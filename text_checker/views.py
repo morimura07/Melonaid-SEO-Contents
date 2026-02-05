@@ -98,8 +98,6 @@ def find_related_articles(request):
     topic = request.GET.get("topic", "").strip()
     keywords = request.GET.getlist("keywords[]", [])
 
-    topic = topic.lower()
-    keywords = [k.lower() for k in keywords]
     query = Q()
 
     if topic:
