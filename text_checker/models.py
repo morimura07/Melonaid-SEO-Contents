@@ -9,7 +9,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_embedding(text):
     response = client.embeddings.create(
-        model="text-embedding-ada-small",
+        model="text-embedding-3-small",
         input=text
     )
 
