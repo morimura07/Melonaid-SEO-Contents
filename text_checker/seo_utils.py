@@ -134,6 +134,7 @@ def generate_embedding(text):
         model="text-embedding-ada-002",
         input=text
     )
+    
     return response.data[0].embedding
 
 def retrieve_similar_articles(query_text, top_k=5, similarity_threshold=0.2):
