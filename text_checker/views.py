@@ -130,7 +130,7 @@ def recent_articles(request):
     topic = request.GET.get("topic", "").strip()
     query = Q(title__icontains=topic) | Q(content__icontains=topic)
 
-    articles = Article.objects.filter(query).exclude(title__icontains="article").order_by("-id")[:5]
+    articles = Article.objects.filter(query).exclude(title__icontains="article").order_by("-id")[:2]
 
     data = [{
         "id": a.id,
