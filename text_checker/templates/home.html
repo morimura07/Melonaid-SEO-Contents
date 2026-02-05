@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <title>Создание статей</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+      }
+
+      #article-container h1, #article-container h2, #article-container h3, #article-container h4, #article-container h5, #article-container h6 {
+        font-weight: bold;
+      }
+
+      .container {
+        display: flex;
+        gap: 20px;
+      }
+
+      #form-container {
+        width: 50%;
+      }
+
+      #article-container {
+        width: 50%;
+        max-height: 600px;
+        overflow-y: auto;
+        padding: 15px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      textarea {
+        width: 100%;
+      }
+
+      button {
+        padding: 10px 20px;
+        margin-top: 10px;
+        font-size: 16px;
+      }
+
+      h3 {
+        margin-top: 0;
+      }
+
+      #article {
+        text-align: justify;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div id="form-container">
+        <form id="chatgpt-form" enctype="multipart/form-data">
+          {% csrf_token %}
+          <label for="task"><strong>Введите тему статьи или статью (поисковый запрос):</strong></label><br>
+          <textarea id="task" name="original_text" rows="10"></textarea><br>
+          <button type="submit" id="chatgpt-form">Сгенерировать статью</button>
+          <button type="button" id="show-keywords">Показать ключевые слова</button>
+          <button type="button" id="findArticleBtn">Найти статью</button>
+          <div id="relatedArticlesContainer"></div>
+          <div id="articleContentContainer" style="display:none;"></div>
+          <div id="article-div" style="margin-top: 30px; border-top: 1px solid #ccc;"></div>
+          <div id="keywords-container" style="margin-top: 15px;"></div>
+          <div id="analysis-container" style="margin-top: 20px; background: #eef2f5; padding: 15px; border-radius: 8px;">
+            <div id="analysis-text"><strong>Здесь появится анализ текста...</strong></div>
+          </div>
+          <button type="button" id="saveArticleBtn" style="display:none;">Сохранить статью</button>
+        </form>
+      </div>
+
+      <div id="article-container">
+        <h3><strong>Статья:</strong></h3>
+        <div id="article">Здесь появится ваша статья...</div>
+      </div>
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+      document.getElementById("chatgpt-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const task = document.getElementById("task").value;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const articleDiv = document.getElementById("article");
+        const analysisDiv = document.getElementById("analysis-text");
+        
+        const selectedKeywords = Array.from(document.querySelectorAll('input[name="keywords"]:checked')).map(input => input.value);
+
+        articleDiv.innerHTML = "<strong>⏳ Идет генерация статьи. Пожалуйста, подождите…</strong>";
+        analysisDiv.innerHTML = "<strong>Здесь появится анализ текста...</strong>";
+
+        try {
+          const response = await fetch("{% url 'home' %}", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": csrfToken
+              },
+              body: JSON.stringify({
+                  original_text: task,
+                  key_points: selectedKeywords
+              })
+          });
+
+          const data = await response.json();
+
+          if (data.rewritten_text) {
+            const lowerCaseText = data.rewritten_text;
+            const indexOcenki = lowerCaseText.indexOf("Оценки текста:");
+            const indexSpisok = lowerCaseText.indexOf("Список литературы");
+
+            let splitIndex = -1;
+            let splitKey = "";
+
+            if (indexOcenki !== -1 && (indexSpisok === -1 || indexOcenki < indexSpisok)) {
+                splitIndex = indexOcenki;
+                splitKey = "Оценки текста:";
+            } else if (indexSpisok !== -1) {
+                splitIndex = indexSpisok;
+                splitKey = "Список литературы";
+            }
+
+            if (splitIndex !== -1) {
+              const mainText = data.rewritten_text.slice(0, splitIndex);
+              const analysisText = data.rewritten_text.slice(splitIndex + splitKey.length);
+
+              articleDiv.innerHTML = marked.parse(mainText.replace(/\*/g, ""));
+              analysisDiv.innerHTML = "<h3>Оценки текста:</h3> "+marked.parse(analysisText);
+            } else {
+              articleDiv.innerHTML = marked.parse(data.rewritten_text);
+              analysisDiv.innerHTML = "<em>Анализ не найден.</em>";
+            }
+
+            document.getElementById("saveArticleBtn").style.display = "inline-block";
+
+            document.getElementById("saveArticleBtn").dataset.title = task;
+            document.getElementById("saveArticleBtn").dataset.content = data.rewritten_text;
+          } else {
+              articleDiv.innerHTML = "<strong>⚠️ Ошибка:</strong> " + (data.error || "Не удалось сгенерировать статью.");
+          }
+          
+          fetch(`/recent-articles/?topic=${encodeURIComponent(task)}`)
+            .then(res => res.json())
+            .then(data => {
+                const articleDiv = document.getElementById("article-div");
+                if (data.articles && data.articles.length > 0) {
+                    let html = `<h4>🕘 Последние статьи по теме:</h4><ul>`;
+                    data.articles.forEach(article => {
+                        html += `
+                          <li>
+                            <a href="#" class="recent-article-link" data-id="${article.id}" data-title="${article.title}">${article.title}</a>
+                          </li>
+                        `;
+                    });
+                    html += `</ul>`;
+                    articleDiv.innerHTML = html;
+                } else {
+                    articleDiv.innerHTML = "<em>Нет недавних статей по этой теме.</em>";
+                }
+            });
+        } catch (error) {
+          articleDiv.innerHTML = "<strong>⚠️ Ошибка соеденения с сервером.</strong>";
+        }
+      });
+
+      document.getElementById("show-keywords").addEventListener("click", async function () {
+          const task = document.getElementById("task").value.trim();
+          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+          const keywordsContainer = document.getElementById("keywords-container");
+          const selectedKeywords = Array.from(document.querySelectorAll('input[name="keywords"]:checked')).map(input => input.value);
+
+          const response = await fetch("{% url 'generate_keywords' %}", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": csrfToken
+              },
+              body: JSON.stringify({ topic: task })
+          });
+
+          const data = await response.json();
+          let keywords = data.keywords || [];
+
+          keywords = keywords.filter(word => !selectedKeywords.includes(word));
+
+          const combined = [...selectedKeywords, ...keywords];
+
+          keywordsContainer.innerHTML = "";
+
+          combined.forEach(word => {
+              const label = document.createElement("label");
+              label.style.display = "block";
+
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.name = "keywords";
+              checkbox.value = word;
+              
+              if (selectedKeywords.includes(word)) {
+                  checkbox.checked = true;
+              }
+
+              label.appendChild(checkbox);
+              label.appendChild(document.createTextNode(" " + word));
+              keywordsContainer.appendChild(label);
+          });
+      });
+
+      document.getElementById("saveArticleBtn").addEventListener("click", async function () {
+          const title = this.dataset.title;
+          const content = this.dataset.content;
+          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+          const response = await fetch("/save-article/", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": csrfToken
+              },
+              body: JSON.stringify({ title, content })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+              alert("✅ Статья успешно сохранена.");
+              this.style.display = "none";
+          } else {
+              alert("⚠️ Ошибка при сохранении: " + (data.error || "неизвестная ошибка"));
+          }
+      });
+
+      $(document).on("click", ".recent-article-link", function (e) {
+          e.preventDefault();
+          const articleId = this.dataset.id;
+          const title = this.dataset.title;
+
+          $.get(`/get-article?id=${articleId}`, function (data) {
+              const formattedText = data.content.replace(/\*/g, "").replace(/\#/g, "").replace(/\n/g, "<br>");
+              $("#article-div").html(`
+                  <h2>${title}</h2>
+                  <div>${formattedText}</div>
+                  <button id="delete-article-btn" data-id="${articleId}" style="margin-top: 10px; background: red; color: white;">Удалить статью</button>
+              `);
+          });
+      });
+
+      $(document).on("click", "#delete-article-btn", function () {
+          const articleId = this.dataset.id;
+
+          if (!confirm("Вы уверены, что хотите удалить эту статью?")) return;
+
+          fetch("{% url 'delete_article' %}", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+              },
+              body: JSON.stringify({ id: articleId })
+          }).then(res => res.json()).then(data => {
+              if (data.success) {
+                  alert("Статья удалена.");
+                  $("#article-div").html("");
+              } else {
+                  alert("Ошибка при удалении: " + (data.error || "неизвестная ошибка"));
+              }
+          });
+      });
+
+      
+      $("#findArticleBtn").on("click", function (e) {
+        e.preventDefault();
+
+        const topic = $("#task").val().trim();
+        const keywords = $("input[name='keywords']:checked").map(function () {
+            return $(this).val();
+        }).get();
+
+        if (!topic) {
+            alert("Пожалуйста, введите тему статьи.");
+            return;
+        }
+
+        $("#relatedArticlesContainer").html("🔍 Поиск статей...").show();
+
+        $.ajax({
+            url: "/find-related-articles/",
+            method: "GET",
+            data: {
+                topic: topic,
+                keywords: keywords
+            },
+            success: function (data) {
+                if (!data.articles || data.articles.length === 0) {
+                    $("#relatedArticlesContainer").html("❌ Статьи не найдены.");
+                    return;
+                }
+
+                let html = "<h4>🔗 Похожие статьи:</h4><ul>";
+                data.articles.slice(0, 5).forEach(function (article) {
+                    html += `<li style="margin-bottom: 10px;">
+                        <a href="#" class="article-link" data-id="${article.id}">${article.title}</a><br>
+                        <small>${article.snippet}</small>
+                    </li>`;
+                });
+                html += "</ul>";
+
+                $("#relatedArticlesContainer").html(html);
+            },
+            error: function () {
+                $("#relatedArticlesContainer").html("⚠️ Ошибка при поиске статей.");
+            }
+        });
+    });
+
+    $(document).on("click", ".article-link", function (e) {
+      e.preventDefault();
+
+      const articleId = $(this).data("id");
+      const articleDiv = $("#article");
+
+      articleDiv.html("<strong>📄 Загружается статья...</strong>");
+
+      $.ajax({
+          url: `/get-article?id=${articleId}`,
+          method: "GET",
+          success: function (data) {
+            if (data.error) {
+                articleDiv.html(`<strong>⚠️ Ошибка:</strong> ${data.error}`);
+            } else {
+                const lowerCaseText = data.content.toLowerCase();
+
+                const indexOcenki = lowerCaseText.indexOf("оценки текста");
+
+                const indices = [
+                    { index: indexOcenki, key: "оценки текста" }
+                  ];
+
+                const filteredIndices = indices.filter(entry => entry.index !== -1);
+                filteredIndices.sort((a, b) => a.index - b.index);
+
+                if (filteredIndices.length > 0) {
+                    const { index: splitIndex, key: splitKey } = filteredIndices[0];
+                  
+                    const mainText = data.content.slice(0, splitIndex);
+                    const analysisText = data.content.slice(splitIndex + splitKey.length);
+
+                    articleDiv.html(`
+                      <h2>${data.title}</h2>
+                      <p>${mainText.replace(/\*/g, "").replace(/\#/g, "").replace(/\n/g, "<br>")}</p>
+                    `);
+
+                    document.getElementById("analysis-text").innerHTML = `
+                      <h3>${splitKey.charAt(0).toUpperCase() + splitKey.slice(1)}</h3>
+                      ${marked.parse(analysisText)}
+                    `;
+                } else {
+                    articleDiv.html(`
+                      <h2>${data.title}</h2>
+                      <p>${data.content.replace(/\*/g, "").replace(/\#/g, "").replace(/\n/g, "<br>")}</p>
+                    `);
+
+                    document.getElementById("analysis-text").innerHTML = "<em>Анализ не найден.</em>";
+                }
+            }
+        }
+      });
+    });
+
+    document.querySelectorAll(".related-article").forEach(item => {
+      item.addEventListener("click", function() {
+          const articleId = this.dataset.id;
+
+          fetch(`/get_article?id=${articleId}`)
+              .then(response => response.json())
+              .then(data => {
+                const formattedText = mainText.replace(/^(\s*[#*]+\s*)(.+)$/gm, "**$1$2**");
+                
+                document.getElementById("article-div").innerHTML = marked.parse(`
+                  <h2>${data.title}</h2>
+                  <p>${formattedText.replace(/\*/g, "").replace(/\#/g, "").replace(/\n/g, "<br>")}</p>
+                `);
+              });
+      });
+    })
+    </script>
+  </body>
+</html>
