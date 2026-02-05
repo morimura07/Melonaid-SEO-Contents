@@ -4,6 +4,7 @@ from numpy.linalg import norm
 from openai import OpenAI
 from celery import shared_task
 import os, random, requests
+import numpy as np
 from uuid import uuid4
 import tiktoken
 
@@ -103,7 +104,7 @@ def write_article(id, technical_task, key_points):
             "Составь SEO-оптимизированный текст на основе ствтьи ниже: \n{topic}\n на 11000-13000 символов с упором на: {points}, ориентированную на семей с детьми, придерживаясь оригинального текста. Используй информацию из {context} в тексте статьи. Добавь короткие title:, description: и keywords: в начале."
         ]
     
-    prompt = random.choice(prompt_templates).format(topic=technical_task, points=key_points)
+    prompt = random.choice(prompt_templates).format(topic=technical_task, points=key_points, context=context)
     prompt += f"\n\n# Сеанс генерации: {unique_marker}"
     
     response = client.chat.completions.create(
@@ -131,11 +132,11 @@ def cosine_similarity(a, b):
 
 def generate_embedding(text):
     response = client.embeddings.create(
-        model="text-embedding-ada-002",
+        model="text-embedding-3-small",
         input=text
     )
-    
-    return response.data[0].embedding
+
+    return np.array(response.data[0].embedding, dtype=np.float32)
 
 def retrieve_similar_articles(query_text, top_k=5, similarity_threshold=0.2):
     from .models import Article
