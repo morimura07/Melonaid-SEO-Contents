@@ -98,11 +98,6 @@ def find_related_articles(request):
     topic = request.GET.get("topic", "").strip()
     keywords = request.GET.getlist("keywords[]", [])
 
-    # query = Q(title__icontains=topic) | Q(content__icontains=topic)
-
-    # for keyword in keywords:
-    #     query |= Q(title__icontains=keyword) | Q(content__icontains=keyword)
-    
     topic = topic.lower()
     keywords = [k.lower() for k in keywords]
     query = Q()
@@ -113,7 +108,7 @@ def find_related_articles(request):
     for k in keywords:
         query |= Q(title__icontains=k) | Q(content__icontains=k)
 
-    articles = Article.objects.filter(query)
+    articles = Article.objects.filter(query).exclude(title__icontains="article")
 
     data = [{
         "id": article.id,
@@ -135,7 +130,7 @@ def recent_articles(request):
     topic = request.GET.get("topic", "").strip()
     query = Q(title__icontains=topic) | Q(content__icontains=topic)
 
-    articles = Article.objects.filter(query).order_by("-id")[:5]
+    articles = Article.objects.filter(query).exclude(title__icontains="article").order_by("-id")[:5]
 
     data = [{
         "id": a.id,
