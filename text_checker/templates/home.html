@@ -58,7 +58,7 @@
       <div id="form-container">
         <form id="chatgpt-form" enctype="multipart/form-data">
           {% csrf_token %}
-          <label for="task"><strong>Введите тему статьи или статью (поисковый запрос):</strong></label><br>
+          <label for="task"><strong>Введите тему статьи, статью или ТЗ (поисковый запрос):</strong></label><br>
           <textarea id="task" name="original_text" rows="10"></textarea><br>
           <button type="submit" id="chatgpt-form">Сгенерировать статью</button>
           <button type="button" id="show-keywords">Показать ключевые слова</button>
