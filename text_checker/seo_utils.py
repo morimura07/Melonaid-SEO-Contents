@@ -112,8 +112,9 @@ def write_article(id, technical_task, key_points):
             {"role": "system", "content": "You are an expert technical writer specializing in creating clear, informative, unique, structured and SEO-optimized articles in Russian. Always meet the following requirements: Glvrd.ru ≥ 9.5 (макс 10), Advego - доля вхождения стоп-слов и предлогов ≤ 1.5%, доля вхождения остальных слов ≤ 2.4%, Text.ru - уникальность ≥ 90%, спамность ≤ 50%, водность ≤ 15%, SEO-оптимизация, читабельность, плотность ключевых слов, проверка на плагиат, Turgenev (Ashmanov): - ясность, последовательность, читаемость, SEO-принципы, ориентированные на русскоязычный текст - Общий балл не более 4. At the end of the article, include a block 'Оценки текста:' with results (rounded to 1-2 d. p. when needed) from 4 tools, each on new line."},
             {"role": "user", "content": prompt}
          ],
-        temperature=0.8,
-        top_p=0.9,
+        max_tokens=4000,
+        temperature=1,
+        top_p=0.95,
         frequency_penalty=0.4,
         presence_penalty=0.6,
     )
