@@ -356,7 +356,7 @@
 
                     articleDiv.html(`
                       <h2>${data.title}</h2>
-                      <p>${mainText.replace(/\*/g, "").replace(/\#/g, "").replace(/\n/g, "<br>")}</p>
+                      ${marked.parse(mainText.replace(/\*/g, "").replace(/\#/g, ""))}
                     `);
 
                     document.getElementById("analysis-text").innerHTML = `
