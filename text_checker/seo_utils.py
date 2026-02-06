@@ -105,7 +105,6 @@ def write_article(id, technical_task, key_points):
         ]
     
     prompt = random.choice(prompt_templates).format(topic=technical_task, points=key_points, context=context)
-    prompt += f"\n\n# Сеанс генерации: {unique_marker}"
     
     response = client.chat.completions.create(
         model="gpt-4.1",
