@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['https://18416f4101f8.ngrok-free.app', 'https://18416f4101f8.ngrok-free.app', '18416f4101f8.ngrok-free.app', '127.0.0.1']
+ALLOWED_HOSTS = ['https://c533-109-181-96-80.ngrok-free.app', 'c533-109-181-96-80.ngrok-free.app', '127.0.0.1', 'melonaid.co.uk', 'www.melonaid.co.uk']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://18416f4101f8.ngrok-free.app'
