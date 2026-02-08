@@ -387,7 +387,7 @@
                 
                 document.getElementById("article-div").innerHTML = marked.parse(`
                   <h2>${data.title}</h2>
-                  <p>${formattedText.replace(/\*/g, "").replace(/\#/g, "").replace(/\n/g, "<br>")}</p>
+                  ${marked.parse(mainText.replace(/\*/g, "").replace(/\#/g, ""))}
                 `);
               });
       });
