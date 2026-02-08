@@ -16,9 +16,7 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -29,10 +27,10 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['https://c533-109-181-96-80.ngrok-free.app', 'c533-109-181-96-80.ngrok-free.app', '127.0.0.1', 'melonaid.co.uk', 'www.melonaid.co.uk']
+ALLOWED_HOSTS = ['https://21cd-109-181-96-80.ngrok-free.app', '21cd-109-181-96-80.ngrok-free.app', '127.0.0.1', 'melonaid.co.uk', 'www.melonaid.co.uk']
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://c533-109-181-96-80.ngrok-free.app'
+    'https://21cd-109-181-96-80.ngrok-free.app'
 ]
 
 # Application definition
@@ -44,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'text_checker',
+    'food_ru_text_checker',
 ]
 
 MIDDLEWARE = [
@@ -57,7 +55,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'text_checker.urls'
+ROOT_URLCONF = 'food_ru_text_checker.urls'
 
 TEMPLATES = [
     {
@@ -75,7 +73,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'text_checker.wsgi.application'
+WSGI_APPLICATION = 'food_ru_text_checker.wsgi.application'
 
 
 # Database
@@ -84,7 +82,7 @@ WSGI_APPLICATION = 'text_checker.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'text_checker_db',
+        'NAME': 'food_ru_text_checker_db',
         'USER': 'main',
         'PASSWORD': 'admin',
     }
@@ -133,6 +131,6 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Celery settings
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6380/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
